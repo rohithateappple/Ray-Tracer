@@ -1,0 +1,3 @@
+﻿  main.cpp
+D:\kin Programming\RayTrace test\interval.h(25): warning C4715: 'interval::clamp': not all control paths return a value
+  RayTrace test.vcxproj -> D:\kin Programming\RayTrace test\x64\Debug\RayTrace test.exe

@@ -1,0 +1,101 @@
+FVector AManager::RayColor(int depth, FVector Start, FVector RayDir)
+{	
+
+	int NumHits = 0;
+	
+	if (depth <= 0) {
+
+		return FVector(0, 0, 0);		
+	}
+
+	FVector End = Start + RayDir * LONG_MAX;
+
+	FHitResult HitResult;
+	FCollisionQueryParams CollisionParams;
+
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, CollisionParams))
+	{	
+
+		if (HitResult.GetNumBlockingHits == 0) {
+			return FVector(10, 255, 210);
+		}
+
+		NumHits++;
+
+		FVector StartOffset = HitResult.ImpactPoint + Alpha * RayDir;
+		FVector EndOffset = StartOffset + RayDir * INT32_MAX;
+
+		FHitResult DummyHitResult;
+
+		if (GetWorld()->LineTraceSingleByChannel(DummyHitResult, StartOffset, EndOffset, ECC_Visibility, CollisionParams)) {
+
+			NumHits++;
+		}
+
+		FVector HitLocation;
+		FVector Direction;
+		
+		if (HitResult.GetActor()->ActorHasTag("Emmision")) {
+			return FVector(255, 255, 255);
+		}
+
+		if (HitResult.GetActor()->ActorHasTag("Diffuse")) {
+			
+			Direction = HitResult.Normal + RandomUnitVector();
+
+			Direction = Direction.GetSafeNormal();			
+
+			if (Direction.IsNearlyZero()) 
+			{
+				Direction = HitResult.Normal;
+			}
+		}
+
+		else if (HitResult.GetActor()->ActorHasTag("Metal")) {
+			
+			Direction = Reflect(RayDir, HitResult.Normal) + Fuzz * RandomUnitVector();
+		}
+
+		else if (HitResult.GetActor()->ActorHasTag("Glass")) {
+
+			bool IsFrontFace = true;
+			FVector Normal = HitResult.Normal;
+
+			if (NumHits % 2 == 1) {
+				IsFrontFace = false;
+			}
+
+			double Refraction_Ratio = IsFrontFace ? (1.0 / IOR) : IOR;
+
+			Direction = Refract(RayDir, Normal, Refraction_Ratio) + Smoke * RandomUnitVector();
+		}
+		
+
+		UMaterialInterface* CurrentMaterial = HitResult.GetActor()->GetComponentByClass<UStaticMeshComponent>()->GetMaterial(0);
+		
+		HitLocation = HitResult.ImpactPoint + Alpha * Direction;
+
+		if (CurrentMaterial) {
+			FName BaseColorParameterName = FName("BaseColor");
+
+			FLinearColor BaseColor;
+			if (CurrentMaterial->GetVectorParameterValue(BaseColorParameterName, BaseColor))
+			{
+								
+				return FVector(255, 255, 255) + FVector(BaseColor.R, BaseColor.G, BaseColor.B) * RayColor(depth - 1, HitLocation, Direction);
+			}
+
+			else
+			{
+				return FVector(255, 255, 255) + RayColor(depth - 1, HitLocation, Direction);
+			}
+		}	
+
+	}
+
+	FVector UnitDirection = RayDir.GetSafeNormal();
+	auto a = 0.6 * (UnitDirection.Z + 1.0);
+	FVector ColorVec = ((1.0 - a) * FVector(255, 255, 255)) + (a * FVector(157, 210, 255));
+	
+	return ColorVec;
+}
