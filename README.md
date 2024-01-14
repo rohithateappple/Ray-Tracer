@@ -1,6 +1,6 @@
 # Custom C++ Ray Tracer
 
-A custom ray tracer following Peter Shirley's 'Ray Tracing in One Weekend'.
+A custom ray tracer following Peter Shirley's 'Ray Tracing in One Weekend'. It was quite an interesting project, I learned that modeling light behavior isn't all that hard! It's just that the brute-force part of the equation really hammers computer hardware :)
 
 ## Renders
 
